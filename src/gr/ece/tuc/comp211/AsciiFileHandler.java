@@ -21,7 +21,7 @@ public class AsciiFileHandler extends File{
         int byte_count;
         int total_byte_count=0;
         int fromIndex;
-        while( (line = reader.readLine())!= null && line_count < 1){
+        while( (line = reader.readLine())!= null /*&& line_count < 1*/){
             line_count++;
             fromIndex=0;
             String [] tokens = 

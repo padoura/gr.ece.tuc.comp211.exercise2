@@ -8,7 +8,7 @@ import java.util.Iterator;
 public class MainController {
 
 	public static void main(String[] args) throws IOException {
-		String[] fileName = { "Obama.txt", "Kennedy.txt", "MartinLutherKing.txt"};
+		String[] fileName = { "Obama.txt", "Kennedy.txt",  "MartinLutherKing.txt"};
 		String bTreeName = "BTreeFile.bin";
 		File deletingBtree = new File(bTreeName);
 		deletingBtree.delete();
@@ -18,7 +18,7 @@ public class MainController {
 		ArrayList<Word> wordList = new ArrayList<Word>();
 		BTreeSearchResult bTreeInsertResult = new BTreeSearchResult();
 				
-		for (int i=0;i<1;i++){
+		for (int i=0;i<fileName.length;i++){
 			AsciiFileHandler file = new AsciiFileHandler(fileName[i]);
 //			wordList.removeAll(file.readAsciiFile());
 			wordList.addAll(file.readAsciiFile());
@@ -30,18 +30,27 @@ public class MainController {
 		
 		while(iter.hasNext()){
 			Word word = iter.next();
-			bTreeInsertResult = bTree.insert(word.key, word.pos);
-			if (bTreeInsertResult.index < 0){
+			if (bTree.length() == 0){
+				bTreeInsertResult = bTree.insert(word.key, word.pos);
 				diskAccessBTreeInsert += bTreeInsertResult.diskAccessNum;
-				numberOfInsertions++;
+			}else{
+				bTreeInsertResult = bTree.searchKey(word.key);
+				System.out.println(bTreeInsertResult.index + " " + bTreeInsertResult.diskAccessNum);
+				diskAccessBTreeInsert += bTreeInsertResult.diskAccessNum;
+				if (bTreeInsertResult.index < 0){
+					bTreeInsertResult = bTree.insert(word.key, word.pos);
+					diskAccessBTreeInsert += bTreeInsertResult.diskAccessNum;
+				}
+
 			}
+			numberOfInsertions++;
 		}
 		
-		System.out.println(diskAccessBTreeInsert);
+		System.out.println("Total disk accesses: " + diskAccessBTreeInsert);
+		System.out.println("Number of total words: " + numberOfInsertions);
 		System.out.println("Average cost of insertion: " + (float) diskAccessBTreeInsert/numberOfInsertions);
 		
-//		BTreeSearchResult test = bTree.searchKey("y");
-		System.out.println("Number of Nodes: " + bTree.length()/pageSize + " " + numberOfInsertions);
+		System.out.println("Number of Nodes: " + bTree.length()/pageSize);
 		bTree.close();
 	}
 }

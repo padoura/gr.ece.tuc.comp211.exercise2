@@ -16,7 +16,7 @@ public class BTreeFile extends RandomAccessFile{
 		super(fileName, "rw");
 		this.pageSize = pageSize;
 		// Order of B-tree as a function of pageSize for 12-bytes key and 4-bytes pointers
-		this.order = (int) ((this.pageSize+8)/20);
+		this.order = (int) Math.floor(Math.floor((double) ((this.pageSize+8)/20))/2)*2 ; //rounding down to nearest even number
 	}
 	
 	
@@ -61,15 +61,15 @@ public class BTreeFile extends RandomAccessFile{
 		if (this.length() == 0){
 			this.create();
 			diskAccessNum = 1; //create B-tree, 1 disk access
-		}else{
-			BTreeSearchResult result = this.searchKey(key);
-			if(result.index>=0){ // Key already exists!
-				return result;
-			}
-		}
+		}//else{
+//			BTreeSearchResult result = this.searchKey(key);
+//			if(result.index>=0){ // Key already exists!
+//				return result;
+//			}
+//		}
 		BTreeNode root = new BTreeNode(this.readPage(0), this.order); //read root, 1 disk access
 		
-		if (root.numKeys == root.key.length - 1){//Create new root and split old one
+		if (root.numKeys == root.key.length){//Create new root and split old one
 			BTreeSearchResult newRoot =  new BTreeSearchResult(new BTreeNode( this.order ), 0);
 			root.parent = 0; //Always keep root as first page
 			BTreeSearchResult oldRoot = new BTreeSearchResult(root, (int) (this.length()/this.pageSize));  //Move old root to end of file
@@ -115,7 +115,7 @@ public class BTreeFile extends RandomAccessFile{
 					BTreeSearchResult child = new BTreeSearchResult(childNode, input.node.child[i]);
 					child.diskAccessNum = input.diskAccessNum+1;
 					
-					if (child.node.numKeys == child.node.key.length -1){
+					if (child.node.numKeys == child.node.key.length){
 						childNode = split(input.node, i, child); // + 3 disk access and return new child
 						int diskAccessNum = this.updatePointerOfChildren(child); // Access all children of old root to update their parent pointer
 						diskAccessNum = diskAccessNum + this.updatePointerOfChildren(new BTreeSearchResult(childNode, input.node.child[i+1])); // Access all children of new node to update their parent pointer
@@ -135,17 +135,17 @@ public class BTreeFile extends RandomAccessFile{
 		
 		// Allocate new node and find median
 		BTreeNode newChild = new BTreeNode(this.order);
-		int median = (int) Math.round( (double) oldChild.node.numKeys/2);
+		int median = (int) Math.round( (double) this.order/2);
 		
-		// Move values to new node
-		for (int i=0; i < median; i++){
+		// Move values to new node, left bias
+		for (int i=0; i < median-1; i++){
 			newChild.key[i] = oldChild.node.key[i+median];
 			newChild.info[i] = oldChild.node.info[i+median];
 		}
-		newChild.numKeys = median;
+		newChild.numKeys = median-1;
 		newChild.parent = oldChild.node.parent;
 		if (!oldChild.node.isLeaf()){
-			for (int i=0; i < median + 1; i++){
+			for (int i=0; i < median; i++){
 				newChild.child[i] = oldChild.node.child[i+median];
 			}
 		}
