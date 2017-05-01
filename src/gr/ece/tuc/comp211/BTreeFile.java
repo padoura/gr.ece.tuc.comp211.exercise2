@@ -1,3 +1,22 @@
+/*
+* This code is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License version as
+* published by the Free Software Foundation, either version 3 of the License, 
+* or (at your option) any later version.
+*
+* This code is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+* version 3 for more details.
+*
+* You should have received a copy of the GNU General Public License version
+* 3 along with this work; if not, see <http://www.gnu.org/licenses/>.
+*
+* Please contact Michail Pantourakis via Github repository 
+* https://github.com/padoura/gr.ece.tuc.comp211.exercise2 if you need additional 
+* information or have any questions.
+*/
+
 package gr.ece.tuc.comp211;
 
 
@@ -5,15 +24,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 public class BTreeFile extends RandomAccessFile{
 	
 	protected int pageSize;
 	protected int order;
 	
-	public BTreeFile(int pageSize, String fileName) throws FileNotFoundException{
-		super(fileName, "rw");
+	public BTreeFile(int pageSize, String filename) throws FileNotFoundException{
+		super(filename, "rw");
+		if (pageSize < 72){
+			throw new IllegalArgumentException("The B-tree cannot be created for pageSize lower than 72.");
+		}
 		this.pageSize = pageSize;
 		// Order of B-tree as a function of pageSize for 12-bytes key and 4-bytes pointers
 		this.order = (int) Math.floor(Math.floor((double) ((this.pageSize+8)/20))/2)*2 ; //rounding down to nearest even number
@@ -61,12 +82,7 @@ public class BTreeFile extends RandomAccessFile{
 		if (this.length() == 0){
 			this.create();
 			diskAccessNum = 1; //create B-tree, 1 disk access
-		}//else{
-//			BTreeSearchResult result = this.searchKey(key);
-//			if(result.index>=0){ // Key already exists!
-//				return result;
-//			}
-//		}
+		}
 		BTreeNode root = new BTreeNode(this.readPage(0), this.order); //read root, 1 disk access
 		
 		if (root.numKeys == root.key.length){//Create new root and split old one
@@ -86,6 +102,7 @@ public class BTreeFile extends RandomAccessFile{
 		}
 	}
 
+	//Based on B-TREE-INSERT-NONFULL pseudocode found in http://staff.ustc.edu.cn/~csli/graduate/algorithms/book6/chap19.htm
 	private BTreeSearchResult insertNonFull(BTreeSearchResult input, String key, int info) throws IOException {
 		key = String.format("%1$-12s", key).substring(0,12); //Append whitespaces to keep String size fixed to 12
 		
@@ -113,7 +130,7 @@ public class BTreeFile extends RandomAccessFile{
 				}else{
 					BTreeNode childNode = new BTreeNode(this.readPage(input.node.child[i]*this.pageSize), this.order); // + 1 disk access
 					BTreeSearchResult child = new BTreeSearchResult(childNode, input.node.child[i]);
-					child.diskAccessNum = input.diskAccessNum+1;
+					child.diskAccessNum = input.diskAccessNum + 1;
 					
 					if (child.node.numKeys == child.node.key.length){
 						childNode = split(input.node, i, child); // + 3 disk access and return new child
@@ -137,7 +154,7 @@ public class BTreeFile extends RandomAccessFile{
 		BTreeNode newChild = new BTreeNode(this.order);
 		int median = (int) Math.round( (double) this.order/2);
 		
-		// Move values to new node, left bias
+		// Move values to new node
 		for (int i=0; i < median-1; i++){
 			newChild.key[i] = oldChild.node.key[i+median];
 			newChild.info[i] = oldChild.node.info[i+median];
@@ -177,6 +194,7 @@ public class BTreeFile extends RandomAccessFile{
 		this.writePage(byteBuffer, newChild.parent*this.pageSize);
 		return newChild;
 	}
+
 	
 	private void create() throws IOException{
 		BTreeNode node = new BTreeNode( this.order );

@@ -1,4 +1,3 @@
-package gr.ece.tuc.comp211;
 /*
 * This code is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License version as
@@ -18,7 +17,7 @@ package gr.ece.tuc.comp211;
 * information or have any questions.
 */
 
-
+package gr.ece.tuc.comp211;
 
 /**
  * A simple assertion mechanism for asserting validity of

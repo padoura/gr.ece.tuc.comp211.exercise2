@@ -19,15 +19,15 @@
 
 package gr.ece.tuc.comp211;
 
-public class Word {
+public class DiskAccessNum {
 	
-	protected String key;
-	protected int pos;
-	protected String filename;
-
-	public Word(String key, int pos, String filename){
-		this.key = key;
-		this.pos = pos;
-		this.filename = filename;
+	protected int bTree;
+	protected int posting;
+	
+	public DiskAccessNum(){
+		bTree = 0;
+		posting = 0;
 	}
+
+	
 }
